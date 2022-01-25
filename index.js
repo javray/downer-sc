@@ -1,9 +1,12 @@
 const express = require('express')
 const app = express()
-const port = process.env.PORT || '3000'
+const port = process.env.PORT || '3003'
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
+const cloudscraper = require('cloudscraper')
+
+app.get('/', async (req, res) => {
+  const result = await cloudscraper.get(req.query.url)
+  res.send(result)
 })
 
 app.listen(port, () => {
