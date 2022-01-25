@@ -25,34 +25,19 @@ app.get('/', async (req, res) => {
 
 });
 
-app.get('/img', async(reg, res) => {
+app.get('/img', async(req, res) => {
 
   if (!req.query.url) {
-    res.send('');
+    res.send('DOWNER-SC-IMG');
     return;
   }
 
-  let result = null;
-
-  try {
-
-    let promiseResolve;
-    const promise = new Promise((resolve) => promiseResolve = resolve);
-    cloudscraper({mmethod: 'GET',
-      url: req.query.url,
-      encoding: null,
-    }, function(err, response, body) {
-      promiseResolve(body.toString('base64'));
-    });
-
-    const result = await promise;
-  }
-  catch(e) {
-    console.log(e);
-  }
-  finally {
-    res.send(result);
-  }
+  cloudscraper({mmethod: 'GET',
+    url: req.query.url,
+    encoding: null,
+  }, function(err, response, body) {
+    res.send(body.toString('base64'));
+  });
 
 });
 
