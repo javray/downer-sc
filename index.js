@@ -26,6 +26,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/img', async(reg, res) => {
+
   if (!req.query.url) {
     res.send('');
     return;
@@ -34,14 +35,23 @@ app.get('/img', async(reg, res) => {
   let result = null;
 
   try {
-    result = await cloudscraper.get(req.query.url);
+
+    let promiseResolve;
+    const promise = new Promise((resolve) => promiseResolve = resolve);
+    cloudscraper({mmethod: 'GET',
+      url: req.query.url,
+      encoding: null,
+    }, function(err, response, body) {
+      promiseResolve(body.toString('base64'));
+    });
+
+    const result = await promise;
   }
   catch(e) {
     console.log(e);
   }
   finally {
-    const buffer = new Buffer(result);
-    res.send(buffer.toString('base64'));
+    res.send(result);
   }
 
 });
