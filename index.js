@@ -40,7 +40,8 @@ app.get('/img', async(reg, res) => {
     console.log(e);
   }
   finally {
-    res.send(Buffer.from(result, 'binary'));
+    const buffer = new Buffer(result);
+    res.send(buffer.toString('base64'));
   }
 
 });
