@@ -4,7 +4,7 @@ const port = process.env.PORT || '3003'
 
 const cloudscraper = require('cloudscraper')
 
-app.get('/', async (req, res) => {
+app.get('/', (req, res) => {
   //const result = await cloudscraper.get(req.query.url)
   //res.send(result)
   res.send(req.query.url)
