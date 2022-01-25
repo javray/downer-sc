@@ -25,6 +25,26 @@ app.get('/', async (req, res) => {
 
 });
 
+app.get('/img', async(reg, res) => {
+  if (!req.query.url) {
+    res.send('');
+    return;
+  }
+
+  let result = null;
+
+  try {
+    result = await cloudscraper.get(req.query.url);
+  }
+  catch(e) {
+    console.log(e);
+  }
+  finally {
+    res.send(Buffer.from(result, 'binary'));
+  }
+
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
