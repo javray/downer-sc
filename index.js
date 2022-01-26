@@ -11,10 +11,20 @@ app.get('/', async (req, res) => {
     return;
   }
 
+  const url = new URL(req.query.url);
+
+  const headers = {
+    referer: url.origin + '/'
+  };
+
   let result = '';
 
   try {
-    result = await cloudscraper.get(req.query.url);
+    result = await cloudscraper({
+      method: 'GET',
+      url: req.query.url,
+      headers
+    });
   }
   catch(e) {
     console.log(e);
@@ -32,7 +42,7 @@ app.get('/img', async(req, res) => {
     return;
   }
 
-  cloudscraper({mmethod: 'GET',
+  cloudscraper({method: 'GET',
     url: req.query.url,
     encoding: null,
   }, function(err, response, body) {
