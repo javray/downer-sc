@@ -13,8 +13,14 @@ app.get('/', async (req, res) => {
 
   const url = new URL(req.query.url);
 
+  let origin = url.origin;
+
+  if (origin.indexOf('atomtt.com') !== -1) {
+    origin = 'https://atomixhq.art';
+  }
+
   const headers = {
-    referer: url.origin + '/'
+    referer: origin + '/'
   };
 
   let result = '';
@@ -42,12 +48,53 @@ app.get('/img', async(req, res) => {
     return;
   }
 
-  cloudscraper({method: 'GET',
+  const url = new URL(req.query.url);
+
+  let origin = url.origin;
+
+  if (req.query.url.indexOf('.torrent') !== -1) {
+    origin = 'https://atomtt.com';
+  }
+
+  const headers = {
+    referer: origin + '/'
+  };
+
+  try {
+    cloudscraper({method: 'GET',
+      url: req.query.url,
+      encoding: null,
+      headers
+    }, function(err, response, body) {
+      res.send(body.toString('base64'));
+    });
+  }
+  catch(e) {
+    console.log(e);
+  }
+
+});
+
+app.get('/post', async(req, res) => {
+
+  const url = new URL(req.query.url);
+
+  let origin = url.origin;
+
+  const headers = {
+    referer: origin + '/'
+  };
+
+  result = await cloudscraper({
+    method: 'POST',
     url: req.query.url,
-    encoding: null,
-  }, function(err, response, body) {
-    res.send(body.toString('base64'));
+    headers,
+    form: {
+      t: req.query.tid
+    }
   });
+
+  res.send(result);
 
 });
 
