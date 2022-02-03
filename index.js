@@ -85,16 +85,24 @@ app.get('/post', async(req, res) => {
     referer: origin + '/'
   };
 
-  result = await cloudscraper({
-    method: 'POST',
-    url: req.query.url,
-    headers,
-    form: {
-      t: req.query.tid
-    }
-  });
+  let result = '';
 
-  res.send(result);
+  try {
+    result = await cloudscraper({
+      method: 'POST',
+      url: req.query.url,
+      headers,
+      form: {
+        t: req.query.tid
+      }
+    });
+  }
+  catch(e) {
+    console.log(e);
+  }
+  finally {
+    res.send(result);
+  }
 
 });
 
