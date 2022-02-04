@@ -4,6 +4,20 @@ const port = process.env.PORT || '3003';
 
 const cloudscraper = require('cloudscraper');
 
+const checkURL = (url) => {
+
+  let urlLocal = null;
+
+  try {
+    urlLocal = new URL(url);
+  }
+  catch(e) {
+    console.log(e);
+  }
+
+  return urlLocal;
+};
+
 app.get('/', async (req, res) => {
 
   if (!req.query.url) {
@@ -11,7 +25,13 @@ app.get('/', async (req, res) => {
     return;
   }
 
-  const url = new URL(req.query.url);
+  const url = checkURL(req.query.url);
+
+  if (url === null) {
+    res.status(400);
+    res.end('Invalid URL');
+    return;
+  }
 
   let origin = url.origin;
 
@@ -48,7 +68,13 @@ app.get('/img', async(req, res) => {
     return;
   }
 
-  const url = new URL(req.query.url);
+  const url = checkURL(req.query.url);
+
+  if (url === null) {
+    res.status(400);
+    res.end('Invalid URL');
+    return;
+  }
 
   let origin = url.origin;
 
@@ -77,7 +103,13 @@ app.get('/img', async(req, res) => {
 
 app.get('/post', async(req, res) => {
 
-  const url = new URL(req.query.url);
+  const url = checkURL(req.query.url);
+
+  if (url === null) {
+    res.status(400);
+    res.end('Invalid URL');
+    return;
+  }
 
   let origin = url.origin;
 
