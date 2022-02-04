@@ -144,5 +144,5 @@ app.get('/post', async(req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`DOWNER-SC listening on port ${port}`);
 });
