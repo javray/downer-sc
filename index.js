@@ -103,6 +103,11 @@ app.get('/img', async(req, res) => {
 
 app.get('/post', async(req, res) => {
 
+  if (!req.query.url) {
+    res.send('DOWNER-SC-POST');
+    return;
+  }
+
   const url = checkURL(req.query.url);
 
   if (url === null) {
