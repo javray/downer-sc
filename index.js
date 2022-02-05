@@ -53,6 +53,7 @@ app.get('/', async (req, res) => {
     });
   }
   catch(e) {
+    console.log(req.query.url);
     console.log(e);
   }
   finally {
@@ -96,6 +97,7 @@ app.get('/img', async(req, res) => {
     });
   }
   catch(e) {
+    console.log(req.query.url);
     console.log(e);
   }
 
@@ -135,6 +137,7 @@ app.get('/post', async(req, res) => {
     });
   }
   catch(e) {
+    console.log(req.query.url);
     console.log(e);
   }
   finally {
