@@ -2,7 +2,12 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || '3003';
 
+const DOMAIN = 'atomixhq.art';
+const DOMAIN_AUX = 'atomtt.com';
+
 const cloudscraper = require('cloudscraper');
+
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const checkURL = (url) => {
 
@@ -16,6 +21,47 @@ const checkURL = (url) => {
   }
 
   return urlLocal;
+};
+
+const cloudscraperPost = async (url, headers, tid) => {
+
+  let result = '';
+
+  try {
+    result = await cloudscraper({
+      method: 'POST',
+      url,
+      headers,
+      form: {
+        t: tid
+      }
+    });
+  }
+  catch(e) {
+    console.log(url);
+    console.log(e);
+  }
+
+  return result;
+};
+
+const cloudscraperGet = async (url, headers) => {
+
+  let result = '';
+
+  try {
+    result = await cloudscraper({
+      method: 'GET',
+      url,
+      headers
+    });
+  }
+  catch(e) {
+    console.log(url);
+    console.log(e);
+  }
+
+  return result;
 };
 
 app.get('/', async (req, res) => {
@@ -35,30 +81,22 @@ app.get('/', async (req, res) => {
 
   let origin = url.origin;
 
-  if (origin.indexOf('atomtt.com') !== -1) {
-    origin = 'https://atomixhq.art';
+  if (origin.indexOf(DOMAIN_AUX) !== -1) {
+    origin = 'https://' + DOMAIN;
   }
 
   const headers = {
     referer: origin + '/'
   };
 
-  let result = '';
+  let result = await cloudscraperGet(req.query.url, headers);
 
-  try {
-    result = await cloudscraper({
-      method: 'GET',
-      url: req.query.url,
-      headers
-    });
+  if (result === '') {
+    await delay(2000);
+    result = await cloudscraperGet(req.query.url, headers);
   }
-  catch(e) {
-    console.log(req.query.url);
-    console.log(e);
-  }
-  finally {
-    res.send(result);
-  }
+
+  res.send(result);
 
 });
 
@@ -80,7 +118,7 @@ app.get('/img', async(req, res) => {
   let origin = url.origin;
 
   if (req.query.url.indexOf('.torrent') !== -1) {
-    origin = 'https://atomtt.com';
+    origin = 'https://' + DOMAIN_AUX;
   }
 
   const headers = {
@@ -124,25 +162,14 @@ app.get('/post', async(req, res) => {
     referer: origin + '/'
   };
 
-  let result = '';
+  let result = await cloudscraperPost(req.query.url, headers, req.query.tid);
 
-  try {
-    result = await cloudscraper({
-      method: 'POST',
-      url: req.query.url,
-      headers,
-      form: {
-        t: req.query.tid
-      }
-    });
+  if (result === '') {
+    await delay(2000);
+    result = await cloudscraperPost(req.query.url, headers, req.query.tid);
   }
-  catch(e) {
-    console.log(req.query.url);
-    console.log(e);
-  }
-  finally {
-    res.send(result);
-  }
+
+  res.send(result);
 
 });
 
