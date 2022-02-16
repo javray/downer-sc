@@ -169,8 +169,19 @@ app.get('/post', async(req, res) => {
     result = await cloudscraperPost(req.query.url, headers, req.query.tid);
   }
 
-  res.send(result);
-
+  try {
+    cloudscraper({method: 'GET',
+      url: 'https://' + DOMAIN + result,
+      encoding: null,
+      headers
+    }, function(err, response, body) {
+      res.send(body.toString('base64'));
+    });
+  }
+  catch(e) {
+    console.log(req.query.url);
+    console.log(e);
+  }
 });
 
 app.listen(port, () => {
