@@ -7,6 +7,7 @@ const DOMAIN_AUX = 'atomtt.com';
 
 const cloudscraper = require('cloudscraper');
 const request = require('request');
+const querystring = require('querystring');
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -46,6 +47,25 @@ const cloudscraperPost = async (url, headers, tid) => {
   return result;
 };
 
+const cloudscraperGet = async (url, headers) => {
+
+  let result = '';
+
+  try {
+    result = await cloudscraper({
+      method: 'GET',
+      url,
+      headers
+    });
+  }
+  catch(e) {
+    console.log(url);
+    console.log(e);
+  }
+
+  return result;
+};
+
 const push = (title, message) => {
 
   const DEVICE = process.env.DEVICE;
@@ -75,23 +95,12 @@ const push = (title, message) => {
   request(options, callback);
 };
 
-const cloudscraperGet = async (url, headers) => {
-
-  let result = '';
-
-  try {
-    result = await cloudscraper({
-      method: 'GET',
-      url,
-      headers
-    });
-  }
-  catch(e) {
+const tryAgain = (endpoint, req) => {
+  return new Promise((resolve, reject) => {
+    const url = req.protocol + '://' + req.headers.host + endpoint + '?' + querystring.stringify(req.query) + '&try=1';
     console.log(url);
-    console.log(e);
-  }
-
-  return result;
+    request.get(url, (error, response, body) => resolve(body));
+  });
 };
 
 app.get('/', async (req, res) => {
@@ -204,11 +213,32 @@ app.get('/post', async(req, res) => {
       url: 'https://' + DOMAIN + result,
       encoding: null,
       headers
-    }, function(err, response, body) {
+    }, async (err, response, body) => {
+
       if (body.toString().indexOf('announce') === -1) {
-        push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result);
+
+        if (req.query.try) {
+          push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result);
+        }
+        else {
+
+          console.log('retry');
+
+          try {
+            body = await tryAgain('/post', req);
+          }
+          catch(e) {
+            console(e);
+          }
+        }
       }
-      res.send(body.toString('base64'));
+
+      if (body) {
+        res.send(body.toString('base64'));
+      }
+      else {
+        res.send('');
+      }
     });
   }
   catch(e) {
