@@ -6,6 +6,7 @@ const DOMAIN = 'atomixhq.art';
 const DOMAIN_AUX = 'atomtt.com';
 
 const cloudscraper = require('cloudscraper');
+const request = require('request');
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -43,6 +44,35 @@ const cloudscraperPost = async (url, headers, tid) => {
   }
 
   return result;
+};
+
+const push = (title, message) => {
+
+  const DEVICE = process.env.DEVICE;
+  const APIKEY = process.env.APIKEY;
+
+  const auth = Buffer.from(APIKEY + ':', 'binary').toString('base64');
+
+  const options = {
+    'method': 'POST',
+    'url': 'https://api.pushbullet.com/api/pushes',
+    'headers': {
+      'Authorization': 'Basic ' + auth,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    form: {
+      'device_iden': DEVICE,
+      'type': 'note',
+      'title': title,
+      'body': message
+    }
+  };
+
+  function callback(error, response, body) {
+    console.log(body);
+  }
+
+  request(options, callback);
 };
 
 const cloudscraperGet = async (url, headers) => {
@@ -175,6 +205,9 @@ app.get('/post', async(req, res) => {
       encoding: null,
       headers
     }, function(err, response, body) {
+      if (body.toString().indexOf('announce') === -1) {
+        push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result);
+      }
       res.send(body.toString('base64'));
     });
   }
