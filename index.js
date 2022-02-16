@@ -219,7 +219,7 @@ app.get('/post', async(req, res) => {
 
 app.get('/push', async (req, res) => {
   push('DOWNER-SC', 'Prueba de envío de push');
-  req.send('PUSH');
+  res.send('PUSH');
 });
 
 app.listen(port, () => {
