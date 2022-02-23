@@ -36,18 +36,28 @@ const checkURL = (url) => {
 
 const puppeteerPost = async(url, tid) => {
 
-  const newProxyUrl = await proxyChain.anonymizeProxy(oldProxyUrl);
-
   return new Promise((final) => {
     puppeteer.launch(
-    { headless: true,
+    { headless: false,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     }
     ).then(async browser => {
       const page = await browser.newPage();
+
+      await page.setRequestInterception(true);
+
+      page.on('request', (req) => {
+        if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
+          req.abort();
+        } else {
+          req.continue();
+        }
+      });
+
       await page.setUserAgent(UA);
       await page.setJavaScriptEnabled(true);
-      await page.goto('https://atomtt.com/to.php');
+
+      await page.goto('https://atomtt.com/to.php', {waitUntil: 'networkidle2'});
       await page.waitForTimeout(10000);
 
       const result = await page.evaluate((tid) => {
@@ -68,7 +78,9 @@ const puppeteerPost = async(url, tid) => {
           }).then((response) => response.text()).then((data) => resolve(data));
         });
       }, tid);
+
       final(result);
+
       await browser.close();
     });
   });
