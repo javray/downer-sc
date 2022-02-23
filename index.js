@@ -38,7 +38,7 @@ const puppeteerPost = async(url, tid) => {
 
   return new Promise((final) => {
     puppeteer.launch(
-    { headless: false,
+    { headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     }
     ).then(async browser => {
