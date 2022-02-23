@@ -14,10 +14,6 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
-const proxyChain = require('proxy-chain');
-
-const oldProxyUrl = process.env.PROXY_SERVER;
-
 const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36';
 
 const UA = USER_AGENT;
@@ -44,14 +40,9 @@ const puppeteerPost = async(url, tid) => {
 
   return new Promise((final) => {
     puppeteer.launch(
-      /*
     { headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     }
-    */
-      { headless: true, executablePath: process.env.CHROME_BIN || null, args: [
-    '--no-sandbox', '--disable-setuid-sandbox', `--proxy-server=${newProxyUrl}`
-  ], ignoreHTTPSErrors: true, dumpio: false}
     ).then(async browser => {
       const page = await browser.newPage();
       await page.setUserAgent(UA);
