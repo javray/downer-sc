@@ -44,7 +44,7 @@ const puppeteerPost = async(url, tid) => {
       await page.setUserAgent(UA);
       await page.setJavaScriptEnabled(true);
       await page.goto('https://atomtt.com/to.php');
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(10000);
 
       const result = await page.evaluate((tid) => {
         return new Promise((resolve) => {
