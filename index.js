@@ -37,7 +37,7 @@ const checkURL = (url) => {
 const puppeteerPost = async(url, tid) => {
 
   return new Promise((final) => {
-    puppeteer.launch({ headless: false,
+    puppeteer.launch({ headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     }).then(async browser => {
       const page = await browser.newPage();
