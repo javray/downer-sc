@@ -20,6 +20,7 @@
   "dependencies": {
     "cloudscraper": "^4.6.0",
     "express": "^4.17.2",
+    "proxy-chain": "^1.0.4",
     "puppeteer": "^13.4.0",
     "puppeteer-extra": "^3.2.3",
     "puppeteer-extra-plugin-stealth": "^2.9.0",
