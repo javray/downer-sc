@@ -45,7 +45,10 @@ const flareSolverrPost = (url, tid) => {
     };
 
     function callback(error, response, body) {
-      resolve(decode(body.solution.response.replace(/(<([^>]+)>)/gi, '')));
+      resolve({
+        partial : decode(body.solution.response.replace(/(<([^>]+)>)/gi, '')),
+        userAgent: body.solution.userAgento
+      });
     }
 
     request(options, callback);
@@ -227,14 +230,11 @@ app.get('/post', async(req, res) => {
 
   let result = await flareSolverrPost(req.query.url, req.query.tid);
 
-  if (result === '') {
-    await delay(2000);
-    result = await flareSolverrPost(req.query.url, req.query.tid);
-  }
+  headers['User-Agent'] = result.userAgent;
 
   try {
     cloudscraper({method: 'GET',
-      url: 'https://' + DOMAIN + result,
+      url: 'https://' + DOMAIN + result.partial,
       encoding: null,
       headers
     }, async (err, response, body) => {
@@ -242,7 +242,7 @@ app.get('/post', async(req, res) => {
       if (body.toString().indexOf('announce') === -1) {
 
         if (req.query.try) {
-          push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result);
+          push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result.partial);
         }
         else {
 
