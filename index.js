@@ -9,15 +9,6 @@ const cloudscraper = require('cloudscraper');
 const request = require('request');
 const querystring = require('querystring');
 
-const puppeteer = require('puppeteer-extra');
-
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-puppeteer.use(StealthPlugin());
-
-const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36';
-
-const UA = USER_AGENT;
-
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const checkURL = (url) => {
@@ -59,58 +50,6 @@ const flareSolverrPost = (url, tid) => {
     request(options, callback);
   });
 
-};
-
-const puppeteerPost = async(url, tid) => {
-
-  return new Promise((final) => {
-    puppeteer.launch(
-    { headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    }
-    ).then(async browser => {
-      const page = await browser.newPage();
-
-      await page.setRequestInterception(true);
-
-      page.on('request', (req) => {
-        if(req.resourceType() == 'stylesheet' || req.resourceType() == 'font' || req.resourceType() == 'image'){
-          req.abort();
-        } else {
-          req.continue();
-        }
-      });
-
-      await page.setUserAgent(UA);
-      await page.setJavaScriptEnabled(true);
-
-      await page.goto('https://atomtt.com/to.php', {waitUntil: 'networkidle2'});
-      await page.waitForTimeout(10000);
-
-      const result = await page.evaluate((tid) => {
-        return new Promise((resolve) => {
-          fetch("https://atomtt.com/to.php", {
-            "headers": {
-              "cache-control": "no-cache",
-              "content-type": "application/x-www-form-urlencoded",
-              "pragma": "no-cache",
-              "upgrade-insecure-requests": "1"
-            },
-            "referrer": "https://atomtt.com/to.php?__cf_chl_tk=FqkFnPBOrzX9TsKQULZ6Z7Qiy1Q4b1AmoMpymV1c3D8-1645650467-0-gaNycGzNCpE",
-            "referrerPolicy": "strict-origin-when-cross-origin",
-            "body": "t=" + tid,
-            "method": "POST",
-            "mode": "cors",
-            "credentials": "include"
-          }).then((response) => response.text()).then((data) => resolve(data));
-        });
-      }, tid);
-
-      final(result);
-
-      await browser.close();
-    });
-  });
 };
 
 const cloudscraperPost = async (url, headers, tid) => {
