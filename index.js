@@ -34,6 +34,33 @@ const checkURL = (url) => {
   return urlLocal;
 };
 
+const flareSolverrPost = (url, tid) => {
+
+  return new Promise((resolve) => {
+
+    const options = {
+      'method': 'POST',
+      'url': 'http://downer.javray.com:8191/v1',
+      'headers': {
+        'Content-Type': 'application/json'
+      },
+      json: {
+        cmd: 'request.post',
+        url: url,
+        maxTimeout: 60000,
+        postData: 't=' + tid
+      }
+    };
+
+    function callback(error, response, body) {
+      resolve(body.solution.response.replace(/(<([^>]+)>)/gi, ''));
+    }
+
+    request(options, callback);
+  });
+
+};
+
 const puppeteerPost = async(url, tid) => {
 
   return new Promise((final) => {
@@ -149,11 +176,7 @@ const push = (title, message) => {
     }
   };
 
-  function callback(error, response, body) {
-    console.log(body);
-  }
-
-  request(options, callback);
+  request(options);
 };
 
 const tryAgain = (endpoint, req) => {
@@ -262,11 +285,11 @@ app.get('/post', async(req, res) => {
     referer: origin + '/'
   };
 
-  let result = await puppeteerPost(req.query.url, req.query.tid);
+  let result = await flareSolverrPost(req.query.url, req.query.tid);
 
   if (result === '') {
     await delay(2000);
-    result = await puppeteerPost(req.query.url, req.query.tid);
+    result = await flareSolverrPost(req.query.url, req.query.tid);
   }
 
   try {
