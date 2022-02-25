@@ -8,6 +8,7 @@ const DOMAIN_AUX = 'atomtt.com';
 const cloudscraper = require('cloudscraper');
 const request = require('request');
 const querystring = require('querystring');
+const decode = require('html-entities-decoder');
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -44,7 +45,7 @@ const flareSolverrPost = (url, tid) => {
     };
 
     function callback(error, response, body) {
-      resolve(body.solution.response.replace(/(<([^>]+)>)/gi, ''));
+      resolve(decode(body.solution.response.replace(/(<([^>]+)>)/gi, '')));
     }
 
     request(options, callback);
