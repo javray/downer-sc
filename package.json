@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "preinstall": "PUPPETEER_PRODUCT=firefox npm install puppeteer",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
