@@ -10,6 +10,8 @@ const request = require('request');
 const querystring = require('querystring');
 const decode = require('html-entities-decoder');
 
+const puppeteer = require('puppeteer');
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const checkURL = (url) => {
@@ -26,28 +28,107 @@ const checkURL = (url) => {
   return urlLocal;
 };
 
+const jsonToCookieString = (json) => {
+  return `${json.name}=${json.value}; domain=${json.domain}; path=${json.path}; expires=${new Date(json.expires * 1000).toUTCString()};${json.httpOnly ? ' httpOnly;' : ''}${json.secure? ' secure;' : ''}`;
+};
+
+const extraPrefsFirefox = {
+    // Disable newtabpage
+    "browser.newtabpage.enabled": false,
+    "browser.startup.homepage": "about:blank",
+
+    // Do not warn when closing all open tabs
+    "browser.tabs.warnOnClose": false,
+
+    // Disable telemetry
+    "toolkit.telemetry.reportingpolicy.firstRun": false,
+
+    // Disable first-run welcome page
+    "startup.homepage_welcome_url": "about:blank",
+    "startup.homepage_welcome_url.additional": "",
+
+    // Detected !
+    // // Disable images to speed up load
+    // "permissions.default.image": 2,
+
+    // Limit content processes to 1
+    "dom.ipc.processCount": 1
+};
+
+const puppeteerOptions = {
+  product: 'firefox',
+  headless: true,
+  timeout: 40000,
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
+};
+
+const UA = 'Mozilla/5.0 (X11; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0';
+//const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:97.0) Gecko/20100101 Firefox/97.0';
+
+const puppeteerPost = async(url, tid) => {
+
+  return new Promise((final) => {
+
+    puppeteer.launch(Object.assign({}, puppeteerOptions, {extraPrefsFirefox: extraPrefsFirefox}))
+    .then(async browser => {
+      const page = await browser.newPage();
+      await page.setUserAgent(UA);
+      await page.setDefaultNavigationTimeout(puppeteerOptions.timeout / 2);
+      try {
+        await page.goto('https://atomtt.com/to.php', {waitUntil: 'domcontentloaded', timeout: puppeteerOptions.timeout});
+        await page.waitForTimeout(5000);
+      }
+      catch (e) {
+        await page.goto('https://atomtt.com/to.php', {waitUntil: 'domcontentloaded', timeout: puppeteerOptions.timeout});
+        await page.waitForTimeout(10000);
+      }
+
+      const result = await page.evaluate((tid) => {
+        return new Promise((resolve) => {
+          fetch("https://atomtt.com/to.php", {
+            "headers": {
+              "cache-control": "no-cache",
+              "content-type": "application/x-www-form-urlencoded",
+              "pragma": "no-cache",
+              "upgrade-insecure-requests": "1"
+            },
+            "referrer": "https://atomtt.com/to.php?__cf_chl_tk=FqkFnPBOrzX9TsKQULZ6Z7Qiy1Q4b1AmoMpymV1c3D8-1645650467-0-gaNycGzNCpE",
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": "t=" + tid,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
+          }).then((response) => response.text()).then((data) => resolve(data));
+        });
+      }, tid);
+      final(result);
+      await browser.close();
+    });
+  });
+};
+
 const flareSolverrPost = (url, tid) => {
 
   return new Promise((resolve) => {
 
-    const options = {
-      'method': 'POST',
-      'url': 'http://downer.javray.com:8191/v1',
-      'headers': {
-        'Content-Type': 'application/json'
-      },
+    const options = flareSolverrOptions({
+      headers: {},
       json: {
         cmd: 'request.post',
+        session: 'downer',
         url: url,
         maxTimeout: 60000,
         postData: 't=' + tid
       }
-    };
+    });
 
     function callback(error, response, body) {
+      console.log(body.solution);
       resolve({
         partial : decode(body.solution.response.replace(/(<([^>]+)>)/gi, '')),
-        userAgent: body.solution.userAgento
+        userAgent: body.solution.userAgent,
+        cookies: body.solution.cookies,
+        headers: body.solution.headers
       });
     }
 
@@ -56,12 +137,80 @@ const flareSolverrPost = (url, tid) => {
 
 };
 
+const flareSolverrGet = (url, headers) => {
+
+  return new Promise((resolve) => {
+
+    const options = flareSolverrOptions({
+      headers: headers,
+      json: {
+        cmd: 'request.get',
+        session: 'downer',
+        url: url,
+        maxTimeout: 60000
+      }
+    });
+
+    function callback(error, response, body) {
+      console.log(error);
+      console.log(response);
+      console.log(body);
+      resolve();
+    }
+
+    request(options, callback);
+  });
+};
+
+const flareSolverrOptions = (newOptions) => {
+
+  const options = {
+    method: 'POST',
+    url: 'http://downer.javray.com:8191/v1',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  };
+
+  return Object.assign({}, options, newOptions);
+};
+
+const flareSolverrInit = () => {
+
+  return new Promise((resolve) => {
+
+    const options = flareSolverrOptions({
+      json: {
+        cmd: 'sessions.destroy',
+        session: 'downer'
+      }
+    });
+
+    request(options, () => {
+
+      const options = flareSolverrOptions({
+        json: {
+          cmd: 'sessions.create',
+          session: 'downer'
+        }
+      });
+
+      request(options, () => resolve());
+    });
+  });
+};
+
 const cloudscraperPost = async (url, headers, tid) => {
 
   let result = '';
 
+  const j = cloudscraper.jar();
+
+  j.setCookie(headers.Cookie, 'http://atomtt.com/to.php');
+
   try {
     result = await cloudscraper({
+      jar: j,
       method: 'POST',
       url,
       headers,
@@ -71,8 +220,7 @@ const cloudscraperPost = async (url, headers, tid) => {
     });
   }
   catch(e) {
-    console.log(url);
-    console.log(e);
+    console.log('ERROR: ' + url + '(' + tid + ')');
   }
 
   return result;
@@ -90,8 +238,6 @@ const cloudscraperGet = async (url, headers) => {
     });
   }
   catch(e) {
-    console.log(url);
-    console.log(e);
   }
 
   return result;
@@ -202,7 +348,6 @@ app.get('/img', async(req, res) => {
   }
   catch(e) {
     console.log(req.query.url);
-    console.log(e);
   }
 
 });
@@ -225,25 +370,38 @@ app.get('/post', async(req, res) => {
   let origin = url.origin;
 
   const headers = {
-    referer: origin + '/'
+    referer: origin + '/',
   };
 
+  /*
   let result = await flareSolverrPost(req.query.url, req.query.tid);
 
-  headers['User-Agent'] = result.userAgent;
+  console.log(result);
+
+  let partial = await cloudscraperPost(req.query.url, Object.assign({}, result.headers, headers), req.query.tid);
+
+  console.log(partial);
+
+  result.partial = partial;
+
+  //await flareSolverrGet('https://' + DOMAIN + result.partial, headers);
+  */
+
+  let result = await puppeteerPost(req.query.url, req.query.tid);
 
   try {
     cloudscraper({method: 'GET',
-      url: 'https://' + DOMAIN + result.partial,
+      url: 'https://' + DOMAIN + result,
       encoding: null,
-      headers
+      headers,
     }, async (err, response, body) => {
 
       if (body.toString().indexOf('announce') === -1) {
 
         if (req.query.try) {
-          push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result.partial);
+          push('DOWNER-SC', 'Torrent incorrecto https://' + DOMAIN + result);
         }
+        /*
         else {
 
           console.log('retry');
@@ -255,6 +413,7 @@ app.get('/post', async(req, res) => {
             console(e);
           }
         }
+        */
       }
 
       if (body) {
@@ -267,7 +426,6 @@ app.get('/post', async(req, res) => {
   }
   catch(e) {
     console.log(req.query.url);
-    console.log(e);
   }
 });
 
@@ -276,6 +434,7 @@ app.get('/push', async (req, res) => {
   res.send('PUSH');
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
+  //await flareSolverrInit();
   console.log(`DOWNER-SC listening on port ${port}`);
 });
