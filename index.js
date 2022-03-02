@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || '3003';
 
-const DOMAIN = 'atomixhq.art';
+const DOMAIN = 'atomixhq.link';
 const DOMAIN_AUX = 'atomtt.com';
 
 const cloudscraper = require('cloudscraper');
