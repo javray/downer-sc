@@ -21,6 +21,7 @@
     "cloudscraper": "^4.6.0",
     "express": "^4.17.2",
     "html-entities-decoder": "^1.0.2",
+    "parse-torrent": "^9.1.4",
     "request": "^2.88.2"
   }
 }

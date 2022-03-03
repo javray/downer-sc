@@ -9,6 +9,7 @@ const cloudscraper = require('cloudscraper');
 const request = require('request');
 const querystring = require('querystring');
 const decode = require('html-entities-decoder');
+const parseTorrent = require('parse-torrent');
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -32,7 +33,7 @@ const downerGet = (url, tid) => {
 
     const options = {
       method: 'GET',
-      url: 'http://downer.javray.com:3003/post?url=' + url + '&tid=' + tid,
+      url: 'http://ppt.javray.com:3003/post?url=' + url + '&tid=' + tid,
     };
 
     function callback(error, response, body) {
@@ -211,6 +212,19 @@ app.get('/post', async(req, res) => {
   }
 
   let result = await downerGet(req.query.url, req.query.tid);
+
+  let torrentInfo = parseTorrent(Buffer.from(result, 'base64'));
+
+  if (!torrentInfo.name && !req.query.try) {
+
+    result = await tryAgain('/post', req);
+
+    torrentInfo = parseTorrent(Buffer.from(result, 'base64'));
+
+    if (!torrentInfo.name) {
+      push('DOWNER-SC', 'Error: ' + req.query.tid);
+    }
+  }
 
   res.send(result);
 });
