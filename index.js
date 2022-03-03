@@ -213,17 +213,22 @@ app.get('/post', async(req, res) => {
 
   let result = await downerGet(req.query.url, req.query.tid);
 
-  let torrentInfo = parseTorrent(Buffer.from(result, 'base64'));
+  let torrentInfo = null;
 
-  if (!torrentInfo.name && !req.query.try) {
-
-    result = await tryAgain('/post', req);
-
+  try {
     torrentInfo = parseTorrent(Buffer.from(result, 'base64'));
+  }
+  catch(e) {
 
-    if (!torrentInfo.name) {
-      push('DOWNER-SC', 'Error: ' + req.query.tid);
+    result = null;
+
+    if (!req.query.try) {
+      result = await tryAgain('/post', req);
     }
+  }
+
+  if (torrentInfo === null && !req.query.try) {
+    push('DOWNER-SC', 'Error: ' + req.query.tid);
   }
 
   res.send(result);
