@@ -78,7 +78,8 @@ const cloudscraperGet = async (url, headers) => {
     result = await cloudscraper({
       method: 'GET',
       url,
-      headers
+      headers,
+      cloudflareTimeout: 10000
     });
   }
   catch(e) {
@@ -142,13 +143,13 @@ app.get('/', async (req, res) => {
   }
 
   const headers = {
-    referer: origin + '/'
+    //referer: origin + '/'
   };
 
   let result = await cloudscraperGet(req.query.url, headers);
 
   if (result === '') {
-    await delay(2000);
+    await delay(4000);
     result = await cloudscraperGet(req.query.url, headers);
   }
 
